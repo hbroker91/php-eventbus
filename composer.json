@@ -1,0 +1,32 @@
+{
+    "name": "hbroker91/php-eventbus",
+    "description": "Eventbus for emitting and listening to various events in different classes",
+    "keywords": ["event", "dispatcher", "mediator", "php", "observer"],
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "require": {
+        "php": "^7.0"
+    },
+    "authors": [
+        {
+            "name": "Szalmasági Ádám",
+            "email": "adam.szalmasagi@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Hbroker91\\EventBus\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Hbroker91\\EventBus\\Tests\\": "tests/"
+        }
+    }
+}
