@@ -16,7 +16,7 @@ use Hbroker91\EventBus\Exceptions\EventBusException;
 final class EventBus implements EventBusInterface
 {
     /** @var EventBus holds the singleton of the class */
-    private static $instance = null;
+    private static $instance;
 
     /** @var EventInterface holds the value of passed event */
     private $event;
@@ -32,7 +32,7 @@ final class EventBus implements EventBusInterface
      *
      * @return EventBus
      */
-    public static function getInstance(): EventBus
+    public static function getInstance(): self
     {
         if (static::$instance === null) {
             static::$instance = new static();
@@ -53,12 +53,12 @@ final class EventBus implements EventBusInterface
     /**
      * ### Executes $callback of $class (if class function) or just $callback if it is a Callable
      *
-     * @param $class
+     * @param object $class
      * @param $callback
      *
      * @throws EventBusException
      */
-    private function execute(string $class, $callback): void
+    private function execute(object $class, $callback): void
     {
         if (! empty($this->queue)) {
 
@@ -108,11 +108,11 @@ final class EventBus implements EventBusInterface
     /**
      * ### Strips out namespace part from class's FQN name
      *
-     * @param $FQN - the fully qualified name of the class
+     * @param string $FQN
      *
      * @return string
      */
-    private function stripNamespace($FQN): string
+    private function stripNamespace(string $FQN): string
     {
         $namespaceParts = explode('\\', $FQN);
         $length = count($namespaceParts);
@@ -136,7 +136,7 @@ final class EventBus implements EventBusInterface
         $this->event = $event;
 
         if (! $this->hasListener($event->getType())) {
-            throw new EventDispatcherException('There isn\'t any listeners attached to '
+            throw new EventBusException('There isn\'t any listeners attached to '
                 .'"'.$this->event->getType().'"'.' event');
         }
 
