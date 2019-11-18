@@ -53,9 +53,12 @@ final class EventBus implements EventBusInterface
     /**
      * ### Checks if the origin of the Event is recursive or cross referencing another class
      *
+     * @param object $class
+     * @param $callback
+     * 
      * @throws EventBusException
      */
-    private function checkCrossReference(): void
+    private function checkCrossReference(object $class, $callback): void
     {
         if (! empty($this->queue)) {
 
@@ -94,7 +97,7 @@ final class EventBus implements EventBusInterface
     private function execute(object $class, $callback): void
     {
 
-        $this->checkCrossReference();
+        $this->checkCrossReference($class, $callback);
 
         $type = $this->checkFunctionType($callback);
 
