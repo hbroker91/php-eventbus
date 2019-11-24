@@ -4,7 +4,6 @@
     "keywords": ["event", "dispatcher", "mediator", "php", "observer"],
     "type": "library",
     "license": "MIT",
-    "version": "1.0.0",
     "require": {
         "php": "^7.0"
     },
@@ -21,12 +20,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Hbroker91\\EventBus\\": "src/"
+            "Hbroker91\\PHPEventBus\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Hbroker91\\EventBus\\Tests\\": "tests/"
+            "Hbroker91\\PHPEventBus\\Tests\\": "tests/"
         }
     }
 }

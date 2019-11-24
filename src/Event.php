@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Hbroker91\EventBus;
+namespace Hbroker91\PHPEventBus;
 
-use Hbroker91\EventBus\Contracts\EventInterface;
+use Hbroker91\PHPEventBus\Contracts\EventInterface;
 
 /**
- * Class Event
+ * ## Model class for representing an Event
  *
- * @package Dispatcher
+ * @package Hbroker91\PHPEventBus
+ *
+ * @copyright 2019. Adam Szalmasagi
+ * @license MIT
  */
 class Event implements EventInterface
 {
@@ -27,6 +30,7 @@ class Event implements EventInterface
 
     /**
      * Event constructor.
+     *
      * @param string $origin
      * @param string $type
      * @param $payload
@@ -82,7 +86,7 @@ class Event implements EventInterface
     /**
      * @param mixed $type
      */
-    public function setType($type)
+    public function setType($type): void
     {
         $this->type = $type;
     }

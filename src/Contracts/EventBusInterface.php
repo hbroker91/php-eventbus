@@ -1,14 +1,18 @@
 <?php
 declare(strict_types=1);
 
-namespace Hbroker91\EventBus\Contracts;
+namespace Hbroker91\PHPEventBus\Contracts;
 
-use Hbroker91\EventBus\Exceptions\EventBusException;
+use Hbroker91\PHPEventBus\Exceptions\EventBusException;
+use Hbroker91\PHPEventBus\Subscriber;
 
 /**
- * ### Interface EventBusInterface
+ * Interface EventBusInterface
  *
- * @package Hbroker91\EventBus
+ * @package Hbroker91\PHPEventBus\Contracts
+ *
+ * @copyright 2019. Adam Szalmasagi
+ * @license MIT
  */
 interface EventBusInterface
 {
@@ -47,11 +51,11 @@ interface EventBusInterface
      * The more bigger the affinity, the given subscriber will notified more
      * earlier about the happening of the specified event
      *
-     * @param SubscriberInterface $class
+     * @param Subscriber $subscriber
      *
-     * @throws EventDispatcherException
+     * @throws EventBusException
      */
-    public function subscribe(SubscriberInterface $class): void;
+    public function subscribe(Subscriber $subscriber): void;
 
     /**
      * Unsubscribes a subscriber from a specific event
@@ -59,7 +63,7 @@ interface EventBusInterface
      * @param string              $type       - type (name) of the event
      * @param SubscriberInterface $subscriber - object of the subscriber class
      *
-     * @throws EventDispatcherException
+     * @throws EventBusException
      */
     public function unSubscribe(string $type, SubscriberInterface $subscriber): void;
 
@@ -68,7 +72,7 @@ interface EventBusInterface
      *
      * @param EventInterface $event
      *
-     * @throws EventDispatcherException
+     * @throws EventBusException
      */
     public function broadcast(EventInterface $event): void;
 
