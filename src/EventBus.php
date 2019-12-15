@@ -35,6 +35,9 @@ final class EventBus implements EventBusInterface
     /** @var mixed holds the name of the function or the explicit Closure at reference analysis */
     private $refMethod;
 
+    /** @var int holds the actual size of the queue */
+    private $queueSize;
+
     /**
      * ### Singleton of this class
      *
@@ -73,10 +76,8 @@ final class EventBus implements EventBusInterface
      */
     private function isClassSelfReferencing(): bool
     {
-        $size = count($this->queue) - 1;
-
-        if ($this->refClass === $this->queue[$size][0] &&
-            $this->refMethod === $this->queue[$size][1]) {
+        if ($this->refClass === $this->queue[$this->queueSize][0] &&
+            $this->refMethod === $this->queue[$this->queueSize][1]) {
             unset($refClass, $refMethod, $this->queue);
             return true;
         }
@@ -90,10 +91,9 @@ final class EventBus implements EventBusInterface
      */
     private function isClassCrossReferencing(): bool
     {
-        $size = count($this->queue) - 1;
-        if (($size >= 3) &&
-            $this->queue[$size] === $this->queue[$size - 2] &&
-            $this->queue[$size - 1] === [$this->refClass, $this->refMethod]) {
+        if (($this->queueSize >= 3) &&
+            $this->queue[$this->queueSize] === $this->queue[$this->queueSize - 2] &&
+            $this->queue[$this->queueSize - 1] === [$this->refClass, $this->refMethod]) {
             return true;
         }
         return false;
@@ -110,6 +110,8 @@ final class EventBus implements EventBusInterface
     private function checkCrossReference(object $class, $callback): void
     {
         if (! empty($this->queue)) {
+
+            $this->queueSize = count($this->queue) - 1;
 
             $this->refClass = &$class;
             $this->refMethod = &$callback;
@@ -138,10 +140,7 @@ final class EventBus implements EventBusInterface
     private function execute(object $class, $callback): void
     {
 
-        $this->$this->refClass = &$class;
-        $this->refMethod = &$callback;
-
-        $this->checkCrossReference();
+        $this->checkCrossReference($class,$callback);
 
         $type = $this->getFunctionType($callback);
 
