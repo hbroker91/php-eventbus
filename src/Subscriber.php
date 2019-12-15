@@ -33,7 +33,7 @@ class Subscriber
     {
         $this->reference = $instance;
     }
-    
+
     /**
      * ### Sets up current event's name, allocates an array for other attributes to load
      *

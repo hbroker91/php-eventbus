@@ -29,6 +29,12 @@ final class EventBus implements EventBusInterface
     /** @var array holds the current active listeners for the Event under processing */
     private $queue;
 
+    /** @var object holds the address of subscriber at reference analysis */
+    private $refClass;
+
+    /** @var mixed holds the name of the function or the explicit Closure at reference analysis */
+    private $refMethod;
+
     /**
      * ### Singleton of this class
      *
@@ -61,6 +67,39 @@ final class EventBus implements EventBusInterface
     }
 
     /**
+     * ### Checks if some class referencing itself in its' listener function
+     *
+     * @return bool
+     */
+    private function isClassSelfReferencing(): bool
+    {
+        $size = count($this->queue) - 1;
+
+        if ($this->refClass === $this->queue[$size][0] &&
+            $this->refMethod === $this->queue[$size][1]) {
+            unset($refClass, $refMethod, $this->queue);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ### Checks if a class cross reference with an another listener / subscriber
+     *
+     * @return bool
+     */
+    private function isClassCrossReferencing(): bool
+    {
+        $size = count($this->queue) - 1;
+        if (($size >= 3) &&
+            $this->queue[$size] === $this->queue[$size - 2] &&
+            $this->queue[$size - 1] === [$this->refClass, $this->refMethod]) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * ### Checks if the origin of the Event is self-referencing or cross referencing with another class
      *
      * @param object $class
@@ -70,25 +109,17 @@ final class EventBus implements EventBusInterface
      */
     private function checkCrossReference(object $class, $callback): void
     {
-        if (!empty($this->queue)) {
+        if (! empty($this->queue)) {
 
-            $size = count($this->queue) - 1;
+            $this->refClass = &$class;
+            $this->refMethod = &$callback;
 
-            $refClass = &$class;
-            $refMethod = &$callback;
-
-            // explicit call to itself immediately (recursive)
-            if ($refClass === $this->queue[$size][0] &&
-                $refMethod === $this->queue[$size][1]) {
-                unset($refClass, $refMethod, $this->queue);
+            if ($this->isClassSelfReferencing()) {
                 throw new EventBusException('There is a self-reference loop in class: ' .
                     '"' . $this->stripNamespace(get_class($class)) . '"' . ' method: ' . '"' . $callback . '"');
             }
 
-            // sliding window method
-            if (($size >= 3) &&
-                $this->queue[$size] === $this->queue[$size - 2] &&
-                $this->queue[$size - 1] === [&$class, &$callback]) {
+            if ($this->isClassCrossReferencing()) {
                 throw new EventBusException('There is a cross-reference loop between classes: ' .
                     $this->stripNamespace(get_class($this->queue[$size][0]) . ' and ' . $this->stripNamespace
                         (get_class($this->queue[$size - 1][0]))));
@@ -106,7 +137,11 @@ final class EventBus implements EventBusInterface
      */
     private function execute(object $class, $callback): void
     {
-        $this->checkCrossReference($class, $callback);
+
+        $this->$this->refClass = &$class;
+        $this->refMethod = &$callback;
+
+        $this->checkCrossReference();
 
         $type = $this->getFunctionType($callback);
 
@@ -145,7 +180,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function hasListener(string $type): bool
+    public
+    function hasListener(string $type): bool
     {
         return isset($this->listeners[$type]) && !empty($this->listeners[$type]);
     }
@@ -153,7 +189,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function broadcast(EventInterface $event): void
+    public
+    function broadcast(EventInterface $event): void
     {
         $this->event = $event;
 
@@ -192,7 +229,8 @@ final class EventBus implements EventBusInterface
      *
      * @throws EventBusException
      */
-    private function getFunctionType($toCheck): string
+    private
+    function getFunctionType($toCheck): string
     {
         if (is_string($toCheck)) {
             return 'string';
@@ -212,7 +250,8 @@ final class EventBus implements EventBusInterface
      *
      * @return int
      */
-    private function checkAffinity(int $affinity): int
+    private
+    function checkAffinity(int $affinity): int
     {
         if ($affinity <= 0) {
             return 1;
@@ -223,7 +262,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function addListener(string $type, object $listener, $func, int $affinity): void
+    public
+    function addListener(string $type, object $listener, $func, int $affinity): void
     {
         $aff = $this->checkAffinity($affinity);
         if (empty($this->listeners[$type][$aff])) {
@@ -239,7 +279,8 @@ final class EventBus implements EventBusInterface
      *
      * @param string $eventType
      */
-    private function orderByPriority(string $eventType): void
+    private
+    function orderByPriority(string $eventType): void
     {
         if (!empty($this->listeners[$eventType])) {
             ksort($this->listeners[$eventType]);
@@ -251,7 +292,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function subscribe(Subscriber $subscriber): void
+    public
+    function subscribe(Subscriber $subscriber): void
     {
 
         foreach ($subscriber->getEventsToSubscribe() as $event => $eventData) {
@@ -271,7 +313,8 @@ final class EventBus implements EventBusInterface
      *
      * @return array
      */
-    public function getAllListeners(): array
+    public
+    function getAllListeners(): array
     {
         return $this->listeners;
     }
@@ -283,7 +326,8 @@ final class EventBus implements EventBusInterface
      *
      * @return array
      */
-    public function getListenersByEvent(string $type): array
+    public
+    function getListenersByEvent(string $type): array
     {
         if ($this->hasListener($type)) {
             return $this->listeners[$type];
@@ -294,7 +338,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function unSubscribe(string $type, $subscriber): void
+    public
+    function unSubscribe(string $type, $subscriber): void
     {
         $this->removeListener($type, $subscriber);
     }
@@ -302,7 +347,8 @@ final class EventBus implements EventBusInterface
     /**
      * @inheritDoc
      */
-    public function removeListener(string $type, object $listener): void
+    public
+    function removeListener(string $type, object $listener): void
     {
         if (isset($this->listeners[$type])) {
             foreach ($this->listeners[$type] as $affinity => $listeners) {
