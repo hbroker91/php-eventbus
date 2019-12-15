@@ -33,17 +33,7 @@ class Subscriber
     {
         $this->reference = $instance;
     }
-
-    /**
-     * ### Returns the associated event's name
-     *
-     * @return string
-     */
-    private function getEventName(): string
-    {
-        return $this->eventName;
-    }
-
+    
     /**
      * ### Sets up current event's name, allocates an array for other attributes to load
      *

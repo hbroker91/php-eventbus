@@ -16,7 +16,7 @@ use Hbroker91\PHPEventBus\Contracts\EventInterface;
  */
 class Event implements EventInterface
 {
-    /** @var string holds the source class' name */
+    /** @var object holds the source class' name */
     private $origin;
 
     /** @var string holds type of the event */
@@ -32,7 +32,7 @@ class Event implements EventInterface
      * Event constructor.
      *
      * @param object $origin - source class of the Event
-     * @param string $type - type (name) of hte Event
+     * @param string $type - name of the Event
      * @param $payload - optional data to send with the Event
      */
     public function __construct(object $origin, string $type, $payload)
