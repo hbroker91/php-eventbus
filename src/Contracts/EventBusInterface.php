@@ -7,7 +7,7 @@ use Hbroker91\PHPEventBus\Exceptions\EventBusException;
 use Hbroker91\PHPEventBus\Subscriber;
 
 /**
- * Interface EventBusInterface
+ * ## Collection of necessary methods as a contract for an EventBus
  *
  * @package Hbroker91\PHPEventBus\Contracts
  *
@@ -20,7 +20,7 @@ interface EventBusInterface
      * ### Attaches a listener to a specific event
      *
      * @param string $type     - the type (name) of the Event
-     * @param object $listener - the listener to add
+     * @param object $listener - the object to add as listener
      * @param mixed  $func     - a callable or a function of $listener to invoke
      * @param int    $affinity - a number between 1 - 10 shows the importance of the event for the listener
      */
@@ -29,17 +29,17 @@ interface EventBusInterface
     /**
      * ### Removes $listener from the listeners / subscribers of event $type
      *
-     * @param string $type
-     * @param object $listener
+     * @param string $type - the type (name) of the Event
+     * @param object $listener - object which previously subscribed to this Event
      *
      * @throws EventBusException
      */
     public function removeListener(string $type, object $listener): void;
 
     /**
-     * ### Checks if $type event has any listeners / subscribers in EventBus's registry
+     * ### Checks if ``$type`` event has any listeners / subscribers in EventBus's registry
      *
-     * @param string $type
+     * @param string $type - type (name) of the Event
      *
      * @return bool
      */
@@ -48,10 +48,10 @@ interface EventBusInterface
     /**
      * ### Subscribes a given object of a class to a specific event with the desired affinity
      *
-     * The more bigger the affinity, the given subscriber will notified more
-     * earlier about the happening of the specified event
+     * _The more bigger the affinity, the given subscriber will notified more
+     * earlier about the happening of the specified event_
      *
-     * @param Subscriber $subscriber
+     * @param Subscriber $subscriber - object of the subscriber class
      *
      * @throws EventBusException
      */

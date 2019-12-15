@@ -5,7 +5,7 @@ namespace Hbroker91\PHPEventBus\Exceptions;
 use Exception;
 
 /**
- * Class EventBusException
+ * ## Base Exception class of EventBus
  *
  * @package Hbroker91\PHPEventBus\Exceptions
  *

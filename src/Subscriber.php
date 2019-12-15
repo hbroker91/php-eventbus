@@ -6,7 +6,7 @@ namespace Hbroker91\PHPEventBus;
 use Hbroker91\PHPEventBus\Exceptions\SubcriberException;
 
 /**
- * ## Model class for representing the parameters of subscribing class
+ * ## Model class for representing the attributes of the subscribing class
  *
  * @package Hbroker91\EventBus
  *
@@ -15,96 +15,131 @@ use Hbroker91\PHPEventBus\Exceptions\SubcriberException;
  */
 class Subscriber
 {
-    /** @var  object of the subscribing class */
-    private $object;
+    /** @var object reference of the subscribing class*/
+    private $reference;
 
-    /** @var string name of the Event to subscribe */
-    private $eventName;
+    /** @var array event(s) to which to subscribe */
+    private $events = [];
 
-    /** @var int the level of interest */
-    private $affinity = 1;
-
-    /** @var Callable function of the class / a closure to call @ dispatching */
-    private $handler;
+    /** @var string name of the event to subscribe */
+    private $eventName = '';
 
     /**
-     * Subscriber constructor.
+     * Subscriber constructor
      *
-     * @param array $payload
+     * @param object $instance
+     */
+    public function __construct(object $instance)
+    {
+        $this->reference = $instance;
+    }
+
+    /**
+     * ### Returns the associated event's name
      *
-     * @throws SubcriberException
+     * @return string
      */
-    public function __construct(array $payload)
-    {
-        if (! isset($payload['object'], $payload['eventName'], $payload['handler'])) {
-            throw new SubcriberException('Missing subcriber data');
-        }
-        foreach ($payload as $key => $value) {
-            $this->$key = $value;
-        }
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getObject()
-    {
-        return $this->object;
-    }
-
-    /**
-     * @param mixed $object
-     */
-    public function setObject($object): void
-    {
-        $this->object = $object;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getEventName()
+    private function getEventName(): string
     {
         return $this->eventName;
     }
 
     /**
-     * @param mixed $eventName
+     * ### Sets up current event's name, allocates an array for other attributes to load
+     *
+     * @param string $eventName
+     *
+     * @return $this
      */
-    public function setEventName($eventName): void
+    public function addToEvent(string $eventName): self
     {
         $this->eventName = $eventName;
+        $this->events[$eventName] = [];
+        return $this;
     }
 
     /**
-     * @return int
+     * ### Sets up the handler (callback) of this Subscriber to call later @ dispatching
+     *
+     * @param $callback
+     *
+     * @return $this
+     *
+     * @throws SubcriberException
      */
-    public function getAffinity(): int
+    public function setHandler($callback): self
     {
-        return $this->affinity;
+        if ($this->eventName === '') {
+            throw new SubcriberException('Name of event to subscribe is missing');
+        }
+
+        if (! is_callable($callback) && $callback === '') {
+            throw new SubcriberException('Invalid callback provided');
+        }
+
+        $this->events[$this->eventName]['handler'] = $callback;
+        return $this;
     }
 
     /**
+     * ### Sets the affinity (interest level) of the Subscriber
+     *
      * @param int $affinity
+     *
+     * @return $this
+     *
+     * @throws SubcriberException
      */
-    public function setAffinity(int $affinity): void
+    public function withAffinity(int $affinity = 1): self
     {
-        $this->affinity = $affinity;
+        if ($this->eventName === '') {
+            throw new SubcriberException('Name of event to subscribe is missing');
+        }
+
+        $this->events[$this->eventName]['affinity'] = $affinity;
+        return $this;
     }
 
     /**
-     * @return mixed
+     * ### Returns the subscribing class' reference
+     *
+     * @return object
      */
-    public function getHandler()
+    public function getReference(): object
     {
-        return $this->handler;
+        return $this->reference;
     }
 
     /**
-     * @param mixed $handler
+     * ### Checks if setAffinity & withHandler were invoked @ object creation
+     *
+     * @throws SubcriberException
      */
-    public function setHandler($handler): void
+    private function checkEventData(): void
     {
-        $this->handler = $handler;
+        foreach ($this->events as $name => $data)
+        {
+            if (! isset($data['handler'], $data['affinity'])) {
+                throw new SubcriberException('Handler / affinity or both missing @ event: '.$name);
+            }
+        }
     }
+
+    /**
+     * ### Returns all events, to which the object wants to subscribe
+     *
+     * @return array
+     *
+     * @throws SubcriberException
+     */
+    public function getEventsToSubscribe(): array
+    {
+        if (empty($this->events)) {
+            throw new SubcriberException('No events for subscribe was provided');
+        }
+        $this->checkEventData();
+        return $this->events;
+    }
+
+
 }

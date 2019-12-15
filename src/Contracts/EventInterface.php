@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Hbroker91\PHPEventBus\Contracts;
 
 /**
- * ## Interface EventInterface
+ * ## Collection of necessary methods as a contract for an Event object
  *
  * @package Hbroker91\PHPEventBus\Contracts
  *
@@ -24,14 +24,19 @@ interface EventInterface
     public function setStopped(bool $stopped): void;
 
     /**
-     * @return mixed
+     * @return object
      */
-    public function getOrigin();
+    public function getOrigin(): object;
 
     /**
-     * @return mixed
+     * @param object $object
      */
-    public function getType();
+    public function setOrigin(object $object): void;
+
+    /**
+     * @return string
+     */
+    public function getType(): string;
 
     /**
      * @param mixed $type

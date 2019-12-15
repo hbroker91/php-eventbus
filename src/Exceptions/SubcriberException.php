@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Hbroker91\PHPEventBus\Exceptions;
 
 /**
- * Class SubcriberException
+ * ## Base Exception class of Subscriber
  *
  * @package Hbroker91\PHPEventBus\Exceptions
  *

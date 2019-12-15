@@ -16,7 +16,7 @@ use Hbroker91\PHPEventBus\Subscriber;
 interface SubscriberInterface
 {
     /**
-     * ### Returns the model object representing the subbscribing class
+     * ### Sets up subscribing in class
      */
-    public function subscribe(): Subscriber;
+    public function subscribe(): void;
 }

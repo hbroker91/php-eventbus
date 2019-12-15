@@ -1,167 +1,143 @@
 <?php
-declare(strict_types=1);
 
-namespace Hbroker91\PHPEventBus\Tests;
+namespace Hbroker91\EventBus\Tests\Unit;
 
-use Hbroker91\PHPEventBus\Contracts\SubscriberInterface;
+require_once '../../src/EventBus.php';
+require_once '../TestClasses.php';
+
+use Hbroker91\PHPEventBus\Event;
+use HBroker91\PHPEventBus\EventBus;
 use Hbroker91\PHPEventBus\Exceptions\SubcriberException;
 use Hbroker91\PHPEventBus\Subscriber;
+use Hbroker91\PHPEventBus\Tests\Observer;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Class SubscriberTest
  *
- * @covers Hbroker91\PHPEventBus\Subscriber
  * @package Hbroker91\PHPEventBus\Tests\Unit
+ * @covers \Hbroker91\PHPEventBus\Subscriber
  */
 class SubscriberTest extends TestCase
 {
-    /** @var Subscriber represents one subscribing class */
+    /** @var Subscriber */
     private $subscriber;
-
-    /** @var SubscriberInterface */
-    private $observer;
 
     protected function setUp(): void
     {
-        $this->observer = new class implements SubscriberInterface
-        {
-            /**
-             * ### Returns the model object representing the subbscribing class
-             */
-            public function subscribe(): Subscriber
-            {
-                return new Subscriber([
-                    'object' => $this,
-                    'handler' => 'listen',
-                    'eventName' => 'userAdded',
-                    'affinity' => 6,
-                ]);
-            }
-        };
-
-        $this->subscriber = $this->observer->subscribe();
+        $this->subscriber = new Subscriber($this);
+        $this->subscriber
+            ->addToEvent('sampleEvent')
+            ->setHandler('listen')
+            ->withAffinity(8);
     }
 
-    public function testGetObject(): void
+    public function testConstruct(): void
     {
-        $this->assertInstanceOf(get_class($this->observer), $this->subscriber->getObject());
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertTrue(EventBus::getInstance()->hasListener('sampleEvent'));
     }
 
-    public function testGetEventName(): void
+    public function testAddToEventEmptyEventName()
     {
-        $this->assertEquals('userAdded', $this->subscriber->getEventName());
-    }
-
-    public function testGetAffinity(): void
-    {
-        $this->assertEquals(6, $this->subscriber->getAffinity());
-    }
-
-    public function testGetHandler(): void
-    {
-        $this->assertEquals('listen', $this->subscriber->getHandler());
-    }
-
-    public function testConstructValidInput(): void
-    {
-        $data = [
-            'object' => $this->observer,
-            'handler' => function($event) {
-            var_dump($event);
-            },
-            'eventName' => 'userAdded',
-            'affinity' => 6,
-        ];
-
-        $subscriber = new Subscriber($data);
-        $this->assertEquals($this->observer, $subscriber->getObject());
-        $this->assertEquals(6, $subscriber->getAffinity());
-        $this->assertEquals('userAdded', $subscriber->getEventName());
-        $this->assertEquals(function($event) {
-            var_dump($event);
-        }, $subscriber->getHandler());
-        unset($subscriber);
-    }
-
-    public function testConstructorMissingObject(): void
-    {
+        $this->subscriber = new Subscriber($this);
         $this->expectException(SubcriberException::class);
-        $newSubscriber = new Subscriber([
-            'handler' => function($event) {
-                var_dump($event);
-            },
-            'eventName' => 'userAdded',
-            'affinity' => 6,
-        ]);
-        unset($newSubscriber);
+        $this->subscriber->addToEvent('');
+        $this->subscriber->setHandler(function() {});
     }
 
-    public function testConstructorMissingHandler(): void
+    public function testAddToEventValidEvent()
     {
-        $this->expectException(SubcriberException::class);
-        $newSubscriber = new Subscriber([
-            'object' => $this->observer,
-            'eventName' => 'userAdded',
-            'affinity' => 6,
-        ]);
-        unset($newSubscriber);
+        $this->subscriber = new Subscriber($this);
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->subscriber->setHandler(function($payload) {
+            //var_dump($payload);
+        })
+        ->withAffinity(8);
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertTrue(EventBus::getInstance()->hasListener('tableUpdated'));
+        EventBus::getInstance()->resetAll();
+        unset($this->subscriber);
     }
 
-    public function testConstructorMissingEventName(): void
+    public function testWithAffinityWithoutGivenValue()
     {
-        $this->expectException(SubcriberException::class);
-        $newSubscriber = new Subscriber([
-            'object' => $this->observer,
-            'handler' => function($event) {
-                var_dump($event);
-            },
-            'affinity' => 6,
-        ]);
-        unset($newSubscriber);
+        $this->subscriber = new Subscriber(new Observer());
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->subscriber->setHandler(function($payload) {
+            //var_dump($payload);
+        })
+            ->withAffinity();
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertEquals(1, $this->subscriber->getEventsToSubscribe()['tableUpdated']['affinity']);
+        EventBus::getInstance()->resetAll();
+        unset($this->subscriber);
     }
 
-    public function testConstructorMissingAffinity(): void
+    public function testWithAffinityWithValueGiven()
     {
-        $newSubscriber = new Subscriber([
-            'object' => $this->observer,
-            'handler' => function($event) {
-                var_dump($event);
-            },
-            'eventName' => 'userAdded',
-        ]);
-
-        $this->assertEquals(1, $newSubscriber->getAffinity());
-        unset($newSubscriber);
+        $this->subscriber = new Subscriber(new Observer());
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->subscriber->setHandler(function($payload) {
+            //var_dump($payload);
+        })
+            ->withAffinity(10);
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertEquals(10, $this->subscriber->getEventsToSubscribe()['tableUpdated']['affinity']);
+        EventBus::getInstance()->resetAll();
+        unset($this->subscriber);
     }
 
-    public function testSetObject(): void
+    public function testGetEventsToSubscribeNoEventWasSetup()
     {
-        $instance = new class {
-        };
-        $this->subscriber->setObject($instance);
-        $this->assertEquals($instance, $this->subscriber->getObject());
-        unset($instance);
+        $this->subscriber = new Subscriber(new Observer());
+        $this->expectExceptionMessage('No events for subscribe was provided');
+        EventBus::getInstance()->subscribe($this->subscriber);
+        unset($this->subscriber);
     }
 
-    public function testSetAffinity(): void
+    public function testGetEventsToSubscribe()
     {
-        $this->subscriber->setAffinity(10);
-        $this->assertEquals(10, $this->subscriber->getAffinity());
+        $this->subscriber = new Subscriber(new Observer());
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->subscriber->setHandler(function($payload) {
+            //var_dump($payload);
+        })
+            ->withAffinity(10);
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertArrayHasKey('tableUpdated', $this->subscriber->getEventsToSubscribe());
+        EventBus::getInstance()->resetAll();
+        unset($this->subscriber);
     }
 
-    public function testSetHandler(): void
+    public function testGetReference()
     {
-        $closure = function($event) {
-            var_dump($event);
-        };
-        $this->subscriber->setHandler($closure);
-        $this->assertEquals($closure, $this->subscriber->getHandler());
-        unset($closure);
+        $this->subscriber = new Subscriber($this);
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->subscriber->setHandler(function($payload) {})
+            ->withAffinity(10);
+        EventBus::getInstance()->subscribe($this->subscriber);
+        $this->assertEquals($this, $this->subscriber->getReference());
+        EventBus::getInstance()->resetAll();
+        unset($this->subscriber);
     }
 
-    protected function tearDown(): void
+    public function testSetHandlerWithoutAddEvent()
     {
-        unset($this->subscriber, $this->observer);
+        $this->subscriber = new Subscriber($this);
+        $this->expectExceptionMessage('Name of event to subscribe is missing');
+        $this->subscriber->setHandler(function($payload) {})
+            ->withAffinity(10);
+        unset($this->subscriber);
+    }
+
+    public function testSetHandlerInvalidCallback()
+    {
+        $this->subscriber = new Subscriber($this);
+        $this->subscriber->addToEvent('tableUpdated');
+        $this->expectExceptionMessage('Invalid callback provided');
+        $this->subscriber->setHandler('')
+            ->withAffinity(10);
+        unset($this->subscriber);
     }
 }

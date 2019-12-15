@@ -26,21 +26,20 @@ class Event implements EventInterface
     private $payload;
 
     /** @var bool holds the value of event's exec. state */
-    private $stopped;
+    private $stopped = false;
 
     /**
      * Event constructor.
      *
-     * @param string $origin
-     * @param string $type
-     * @param $payload
+     * @param object $origin - source class of the Event
+     * @param string $type - type (name) of hte Event
+     * @param $payload - optional data to send with the Event
      */
-    public function __construct(string $origin, string $type, $payload)
+    public function __construct(object $origin, string $type, $payload)
     {
         $this->origin = $origin;
         $this->type = $type;
         $this->payload = $payload;
-        $this->stopped = false;
     }
 
     /**
@@ -62,23 +61,23 @@ class Event implements EventInterface
     /**
      * @return mixed
      */
-    public function getOrigin()
+    public function getOrigin(): object
     {
         return $this->origin;
     }
 
     /**
-     * @param mixed $origin
+     * @param object $origin
      */
-    public function setOrigin($origin)
+    public function setOrigin(object $origin): void
     {
         $this->origin = $origin;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }

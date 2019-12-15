@@ -8,7 +8,7 @@ use Hbroker91\PHPEventBus\Contracts\EventInterface;
 use Hbroker91\PHPEventBus\Exceptions\EventBusException;
 
 /**
- * Mediator to provide interaction between subscribers - emitters
+ * ### Mediator to provide interaction between subscribers - emitters
  *
  * @package Hbroker91\PHPEventBus
  *
@@ -20,7 +20,7 @@ final class EventBus implements EventBusInterface
     /** @var EventBus holds the singleton of the class */
     private static $instance;
 
-    /** @var EventInterface holds the value of passed event */
+    /** @var EventInterface holds the passed event object */
     private $event;
 
     /** @var array holds the subscribers / listeners for various events */
@@ -30,7 +30,7 @@ final class EventBus implements EventBusInterface
     private $queue;
 
     /**
-     * ### Provides a static, single object of EventBus class
+     * ### Singleton of this class
      *
      * @return EventBus
      */
@@ -44,7 +44,7 @@ final class EventBus implements EventBusInterface
     }
 
     /**
-     * EventBus constructor.
+     * EventBus constructor
      */
     private function __construct()
     {
@@ -53,7 +53,15 @@ final class EventBus implements EventBusInterface
     }
 
     /**
-     * ### Checks if the origin of the Event is recursive or cross referencing another class
+     * ### Removes all attached listeners of all events from the registry
+     */
+    public function resetAll(): void
+    {
+        $this->listeners = [];
+    }
+
+    /**
+     * ### Checks if the origin of the Event is self-referencing or cross referencing with another class
      *
      * @param object $class
      * @param $callback
@@ -89,7 +97,7 @@ final class EventBus implements EventBusInterface
     }
 
     /**
-     * ### Executes $callback of $class (if class function) or just $callback if it is a Callable
+     * ### Executes $callback of $class (if class has that function) or just $callback if it is a Callable
      *
      * @param object $class
      * @param $callback
@@ -98,22 +106,20 @@ final class EventBus implements EventBusInterface
      */
     private function execute(object $class, $callback): void
     {
-
         $this->checkCrossReference($class, $callback);
 
-        $type = $this->checkFunctionType($callback);
+        $type = $this->getFunctionType($callback);
 
         if ($type === 'string') {
-            $declaredMethods = array_flip(get_class_methods($class));
-            if (!isset($declaredMethods[$callback])) {
+
+            if (!method_exists($class, $callback)) {
                 echo sprintf('%s class doesn\'t have method: %s',
                     $this->stripNamespace(get_class($class)), $callback);
                 return;
-            };
+            }
 
             $this->queue[] = [&$class, &$callback];
-            $class::$callback($this->event, static::$instance);
-
+            $class->$callback($this->event, static::$instance);
             return;
         }
         if ($type === 'function') {
@@ -151,8 +157,8 @@ final class EventBus implements EventBusInterface
     {
         $this->event = $event;
 
-        if (!$this->hasListener($this->$event->getType())) {
-            throw new EventBusException('There isn\'t any listeners attached to '
+        if (!$this->hasListener($this->event->getType())) {
+            throw new EventBusException('There isn\'t any listener attached to '
                 . '"' . $this->event->getType() . '"' . ' event');
         }
 
@@ -186,7 +192,7 @@ final class EventBus implements EventBusInterface
      *
      * @throws EventBusException
      */
-    private function checkFunctionType($toCheck): string
+    private function getFunctionType($toCheck): string
     {
         if (is_string($toCheck)) {
             return 'string';
@@ -196,11 +202,11 @@ final class EventBus implements EventBusInterface
             return 'function';
         }
 
-        throw new EventBusException($toCheck . 'is neither a function or callable');
+        throw new EventBusException($toCheck . 'is neither function nor a callable');
     }
 
     /**
-     * ### Checks if $affinity is valid, autocorrects if needed
+     * ### Checks if $affinity`has valid value, autocorrects if needed
      *
      * @param int $affinity
      *
@@ -248,23 +254,41 @@ final class EventBus implements EventBusInterface
     public function subscribe(Subscriber $subscriber): void
     {
 
-        $aff = $this->checkAffinity($subscriber->getAffinity());
+        foreach ($subscriber->getEventsToSubscribe() as $event => $eventData) {
 
-        $this->addListener($subscriber->getEventName(),
-            $subscriber->getObject(),
-            $subscriber->getHandler(),
-            $aff
-        );
+            $aff = $this->checkAffinity($eventData['affinity']);
+
+            $this->addListener($event,
+                $subscriber->getReference(),
+                $eventData['handler'],
+                $aff
+            );
+        }
     }
 
     /**
-     * ### Returns all attached listeners
+     * ### Returns all registered listener
      *
      * @return array
      */
     public function getAllListeners(): array
     {
         return $this->listeners;
+    }
+
+    /**
+     * ### Returns the registered listeners of $type`Event
+     *
+     * @param string $type
+     *
+     * @return array
+     */
+    public function getListenersByEvent(string $type): array
+    {
+        if ($this->hasListener($type)) {
+            return $this->listeners[$type];
+        }
+        return [];
     }
 
     /**

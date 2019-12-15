@@ -3,14 +3,18 @@ declare(strict_types=1);
 
 namespace Hbroker91\PHPEventBus\Tests\Unit;
 
+require_once '../TestClasses.php';
+
 use Hbroker91\PHPEventBus\Contracts\EventInterface;
 use Hbroker91\PHPEventBus\Event;
+use HBroker91\PHPEventBus\EventBus;
+use Hbroker91\PHPEventBus\Tests\Observer;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Class EventTest
  *
- * @covers Hbroker91\PHPEventBus\Event
+ * @covers \Hbroker91\PHPEventBus\Event
  * @package Hbroker91\PHPEventBus\Tests\Unit
  */
 class EventTest extends TestCase
@@ -18,28 +22,30 @@ class EventTest extends TestCase
     /**
      * @var EventInterface
      */
-    private $event = null;
+    private $event;
+    private $observer;
 
     protected function setUp(): void
     {
-        $this->event = new Event('Observer', 'titleChanged', ['message']);
+        $this->observer = new  Observer();
+        $this->event = new Event($this->observer, 'titleChanged', ['message']);
     }
 
     public function testConstruct(): void
     {
-        $this->assertEquals($this->event, new Event('Observer', 'titleChanged', ['message']));
+        $this->assertEquals($this->event, new Event($this->observer, 'titleChanged', ['message']));
     }
 
     public function testSetOrigin(): void
     {
-        $this->event->setOrigin('SQLHandler');
+        $this->event->setOrigin($this);
         $this->assertNotNull($this->event->getOrigin());
     }
 
     public function testGetOrigin(): void
     {
-        $this->event->setOrigin('SQLHandler');
-        $this->assertEquals('SQLHandler', $this->event->getOrigin());
+        $this->event->setOrigin($this);
+        $this->assertEquals($this, $this->event->getOrigin());
     }
 
     public function testSetPayload(): void
